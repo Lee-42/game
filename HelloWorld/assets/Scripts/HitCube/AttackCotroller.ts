@@ -48,4 +48,8 @@ export class AttackCotroller extends Component {
   }
 
   update(deltaTime: number) {}
+
+  protected onDestroy(): void {
+    input.off(Input.EventType.TOUCH_START, this.onTouchStart, this);
+  }
 }

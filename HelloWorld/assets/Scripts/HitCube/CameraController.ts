@@ -27,5 +27,11 @@ export class CameraController extends Component {
     update(deltaTime: number) {
         
     }
+
+    protected onDestroy(): void {
+        input.off(Input.EventType.TOUCH_START, this.onTouchStart, this);
+        input.off(Input.EventType.TOUCH_MOVE, this.onTouchMove, this);
+        input.off(Input.EventType.TOUCH_END, this.onTouchEnd, this);
+    }
 }
 
