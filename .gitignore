@@ -23,3 +23,6 @@ dist/
 build/
 *.log
 
+# Test files with sensitive data
+**/test.json
+
