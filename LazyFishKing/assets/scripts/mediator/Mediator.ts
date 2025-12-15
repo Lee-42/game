@@ -19,19 +19,13 @@ const { ccclass, property } = _decorator;
 
 @ccclass("Mediator")
 export class Mediator extends Component {
-  /**
-   * 0-1
-   */
+ 
   @property(ProgressBar)
   hpBar: ProgressBar;
 
-  /**
-   * 0-1
-   */
   @property(ProgressBar)
   rageBar: ProgressBar;
 
-  // 模型
   @property(Node)
   model: Node;
 
@@ -39,9 +33,7 @@ export class Mediator extends Component {
   audio: AudioSource;
 
   private _uiOpacity: UIOpacity;
-  /**
-   * 透明度控件
-   */
+
   public get uiOpacity(): UIOpacity {
     return this._uiOpacity;
   }
@@ -77,7 +69,7 @@ export class Mediator extends Component {
   }
 
   /**
-   * actor
+   * build actor attributes by id
    */
   private _actor: Actor;
   public get actor(): Actor {
@@ -88,7 +80,7 @@ export class Mediator extends Component {
   }
 
   /**
-   * 当前是否存活
+   * is alive
    */
   private _isAlive: boolean = true;
   public get isAlive(): boolean {
@@ -98,6 +90,9 @@ export class Mediator extends Component {
     this._isAlive = value;
   }
 
+  /**
+   * attack audio clip
+   */
   private _attackAudioClip: AudioClip;
   public get attackAudioClip(): AudioClip {
     return this._attackAudioClip;
@@ -106,6 +101,9 @@ export class Mediator extends Component {
     this._attackAudioClip = value;
   }
 
+  /**
+   * dead audio clip
+   */
   private _deadAudioClip: AudioClip;
   public get deadAudioClip(): AudioClip {
     return this._deadAudioClip;
@@ -114,6 +112,9 @@ export class Mediator extends Component {
     this._deadAudioClip = value;
   }
 
+  /**
+   * buff audio clip
+   */
   private _buffAudioClip: AudioClip;
   public get buffAudioClip(): AudioClip {
     return this._buffAudioClip;
@@ -202,13 +203,11 @@ export class Mediator extends Component {
       this.attackAudioClip = audioClip;
     });
 
-    //读取死亡音效
     const deadAudioURL = RES_URL.audioPrefix + this.actor.cfg.deadAudio;
     resources.load(deadAudioURL, AudioClip, (error, audioClip) => {
       this.deadAudioClip = audioClip;
     });
 
-    //读取buff音效
     const buffAudio = RES_URL.tauntAudio;
     resources.load(buffAudio, AudioClip, (error, audioClip) => {
       this.buffAudioClip = audioClip;

@@ -15,6 +15,9 @@ export class ActorIdFactory {
     }
 }
 
+/**
+ * gender actor by id
+ */
 export class Actor {
 
     constructor(id: number) {

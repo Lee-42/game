@@ -19,9 +19,6 @@ export class StateMachine extends Component {
     @property(Animation)
     animation: Animation = null;
 
-    /**
-     * 当前状态
-     */
     private _currentState: string = States.EMPTY;
     public get currentState(): string {
         return this._currentState;
@@ -30,6 +27,10 @@ export class StateMachine extends Component {
         this._currentState = value;
     }
 
+    /**
+     * change state and play animation
+     * @param newState 
+     */
     changeState(newState: string) {
         if (this.currentState != newState) {
             this.currentState = newState;

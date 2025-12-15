@@ -112,8 +112,9 @@ export class MoveCommand extends Command {
         this.duration = this.time;
     }
 
-    execute(): void {
+    execute(): void { 
         this.target.changeState(States.WALKING);
+        // 创建平滑的移动动画
         tween(this.target.node)
             .to(this.time, { worldPosition: this.targetPos })
             .call(() => {
