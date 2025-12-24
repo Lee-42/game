@@ -1,0 +1,37 @@
+{
+  "__version__": "1.0.6",
+  "general": {
+    "designResolution": {
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "custom_joint_texture_layouts": [],
+  "physics": {
+    "collisionGroups": [
+      {
+        "index": 1,
+        "name": "Head"
+      },
+      {
+        "index": 2,
+        "name": "Food"
+      },
+      {
+        "index": 3,
+        "name": "Wall"
+      },
+      {
+        "index": 4,
+        "name": "Body"
+      }
+    ],
+    "collisionMatrix": {
+      "0": 0,
+      "1": 28,
+      "2": 2,
+      "3": 2,
+      "4": 2
+    }
+  }
+}
