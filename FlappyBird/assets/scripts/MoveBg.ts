@@ -1,51 +1,45 @@
-import { _decorator, Component, Node } from 'cc';
-import { GameManager } from './GameManager';
+import { _decorator, Component, Node } from "cc";
+import { GameManager } from "./GameManager";
 const { ccclass, property } = _decorator;
 
-@ccclass('MoveBg')
+@ccclass("MoveBg")
 export class MoveBg extends Component {
+  @property(Node)
+  target1ToMove: Node = null;
+  @property(Node)
+  target2ToMove: Node = null;
 
-    @property(Node)
-    target1ToMove:Node = null;
-    @property(Node)
-    target2ToMove:Node = null;
+  private moveSpeed: number = 100;
+  private _canMoving: boolean = false;
 
+  start() {
+    this.moveSpeed = GameManager.inst().moveSpeed;
+  }
 
-    private moveSpeed:number = 100;
-    private _canMoving:boolean = false;
+  update(deltaTime: number) {
+    if (this._canMoving == false) return;
 
-    start() {
-        this.moveSpeed = GameManager.inst().moveSpeed;
+    const moveDistance = this.moveSpeed * deltaTime;
+
+    let p1 = this.target1ToMove.getPosition();
+    this.target1ToMove.setPosition(p1.x - moveDistance, p1.y);
+    let p2 = this.target2ToMove.getPosition();
+    this.target2ToMove.setPosition(p2.x - moveDistance, p2.y);
+
+    if (p1.x < -730) {
+      // 730是背景的宽度的一半
+      p2 = this.target2ToMove.getPosition();
+      this.target1ToMove.setPosition(p2.x + 728, p2.y); // 728是为了避免背景产生间隙
     }
-
-    update(deltaTime: number) {
-
-        if(this._canMoving==false)return;
-        
-        const moveDistance = this.moveSpeed*deltaTime;
-
-        let p1 = this.target1ToMove.getPosition();
-        this.target1ToMove.setPosition(p1.x-moveDistance,p1.y);
-        let p2 = this.target2ToMove.getPosition();
-        this.target2ToMove.setPosition(p2.x-moveDistance,p2.y);
-
-
-        if(p1.x<-730){
-            p2 = this.target2ToMove.getPosition();
-            this.target1ToMove.setPosition(p2.x+728,p2.y);
-        }
-        if(p2.x<-730){
-            p1 = this.target1ToMove.getPosition();
-            this.target2ToMove.setPosition(p1.x+728,p1.y);
-        }
-
+    if (p2.x < -730) {
+      p1 = this.target1ToMove.getPosition();
+      this.target2ToMove.setPosition(p1.x + 728, p1.y);
     }
-    public enableMoving(){
-        this._canMoving=true;
-    }
-    public disableMoving(){
-        this._canMoving = false;
-    }
+  }
+  public enableMoving() {
+    this._canMoving = true;
+  }
+  public disableMoving() {
+    this._canMoving = false;
+  }
 }
-
-
