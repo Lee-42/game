@@ -9,6 +9,9 @@ export class Area extends Component {
     @property
     columns: number = 17;
 
+    @property({ type: Number, tooltip: 'Number of bricks to generate' })
+    num: number = 0;
+
     private _map: number[][] = [];
 
     start() {
@@ -26,6 +29,8 @@ export class Area extends Component {
 
     generateMapData() {
         this._map = [];
+        const emptySpots: { r: number, c: number }[] = [];
+
         for (let r = 0; r < this.rows; r++) {
             const row: number[] = [];
             for (let c = 0; c < this.columns; c++) {
@@ -38,23 +43,45 @@ export class Area extends Component {
                 } else {
                     // Everything else is ground
                     row.push(0);
+                    emptySpots.push({ r, c });
                 }
             }
             this._map.push(row);
+        }
+
+        // Place Bricks
+        if (this.num > emptySpots.length) {
+            console.warn(`Requested ${this.num} bricks, but only ${emptySpots.length} empty spots available.`);
+        }
+
+        const bricksToPlace = Math.min(this.num, emptySpots.length);
+
+        // Shuffle emptySpots
+        for (let i = emptySpots.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [emptySpots[i], emptySpots[j]] = [emptySpots[j], emptySpots[i]];
+        }
+
+        // Assign bricks
+        for (let i = 0; i < bricksToPlace; i++) {
+            const spot = emptySpots[i];
+            this._map[spot.r][spot.c] = 2; // 2 represents Brick
         }
     }
 
     renderMap() {
         const wallNode = this.node.getChildByName('Wall');
         const groundNode = this.node.getChildByName('Ground');
+        const brickNode = this.node.getChildByName('Brick');
 
-        if (!wallNode || !groundNode) {
-            console.error("Area needs 'Wall' and 'Ground' children");
+        if (!wallNode || !groundNode || !brickNode) {
+            console.error("Area needs 'Wall', 'Ground', and 'Brick' children");
             return;
         }
 
         wallNode.active = false;
         groundNode.active = false;
+        brickNode.active = false;
 
         for (let r = 0; r < this.rows; r++) {
             for (let c = 0; c < this.columns; c++) {
@@ -63,6 +90,8 @@ export class Area extends Component {
 
                 if (type === 1) {
                     newNode = instantiate(wallNode);
+                } else if (type === 2) {
+                    newNode = instantiate(brickNode);
                 } else {
                     newNode = instantiate(groundNode);
                 }
