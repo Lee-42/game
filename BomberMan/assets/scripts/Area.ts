@@ -1,4 +1,11 @@
-import { _decorator, Component, Node, instantiate, UITransform } from "cc";
+import {
+  _decorator,
+  Component,
+  Node,
+  instantiate,
+  UITransform,
+  Vec3,
+} from "cc";
 const { ccclass, property } = _decorator;
 
 @ccclass("Area")
@@ -14,9 +21,16 @@ export class Area extends Component {
 
   private _map: number[][] = [];
 
+  // Cache grid info
+  private _tileWidth: number = 40;
+  private _tileHeight: number = 40;
+  private _startX: number = 0;
+  private _startY: number = 0;
+
   start() {
     this.validateDimensions();
     this.generateMapData();
+    // Move renderMap call after we set up grid info, or init grid info inside
     this.renderMap();
   }
 
@@ -90,6 +104,15 @@ export class Area extends Component {
     groundNode.active = false;
     brickNode.active = false;
 
+    // Cache Tile Size and Start Position
+    const transform = groundNode.getComponent(UITransform);
+    this._tileWidth = transform ? transform.width : 40;
+    this._tileHeight = transform ? transform.height : 40;
+
+    // Assuming anchor is 0.5, 0.5
+    this._startX = -(this.columns * this._tileWidth) / 2 + this._tileWidth / 2;
+    this._startY = -(this.rows * this._tileHeight) / 2 + this._tileHeight / 2;
+
     for (let r = 0; r < this.rows; r++) {
       for (let c = 0; c < this.columns; c++) {
         const type = this._map[r][c];
@@ -106,28 +129,10 @@ export class Area extends Component {
         if (newNode) {
           newNode.active = true;
           this.node.addChild(newNode);
-
-          // Position logic: assuming 40x40 tiles, centered or bottom-left
-          // Adjust position calculation as needed. Here we keep it simple relative to parent
-          // or you might want to ask user for tile size.
-          // For now, let's assume specific tile size is handled by layout or just set position based on index.
-          // We need to know the size of the sprite to position correctly.
-
-          // Taking a simpler approach: Just set position.
-          // WARNING: We don't know the tile size.
-          // Let's assume 40 for now or get it from UITransform if available.
-
-          const transform = newNode.getComponent(UITransform);
-          const w = transform ? transform.width : 40;
-          const h = transform ? transform.height : 40;
-
-          // Centering the map? Or starting from 0,0? User didn't specify.
-          // Let's center it for better view if anchor is 0.5,0.5
-
-          const startX = -(this.columns * w) / 2 + w / 2;
-          const startY = -(this.rows * h) / 2 + h / 2;
-
-          newNode.setPosition(startX + c * w, startY + r * h);
+          newNode.setPosition(
+            this._startX + c * this._tileWidth,
+            this._startY + r * this._tileHeight
+          );
         }
       }
     }
@@ -136,17 +141,53 @@ export class Area extends Component {
     const robotNode = this.node.getChildByName("Robot");
     console.log(robotNode);
     if (robotNode) {
-      const transform = groundNode.getComponent(UITransform);
-      const w = transform ? transform.width : 40;
-      const h = transform ? transform.height : 40;
-      const startX = -(this.columns * w) / 2 + w / 2;
-      const startY = -(this.rows * h) / 2 + h / 2;
-
-      robotNode.setPosition(startX + 1 * w, startY + 1 * h);
+      robotNode.setPosition(
+        this._startX + 1 * this._tileWidth,
+        this._startY + 1 * this._tileHeight
+      );
       robotNode.active = true;
       // Ensure Robot is drawn on top of the generated map tiles
       robotNode.setSiblingIndex(this.node.children.length - 1);
     }
+  }
+
+  public spawnBomb(worldPos: Vec3): boolean {
+    const bombTemplate = this.node.getChildByName("Bomb");
+    if (!bombTemplate) {
+      console.warn("Bomb template not found in Area");
+      return false;
+    }
+
+    // Convert worldPos (or relative pos from Robot) to Area local space
+    // Robot is usually child of Area, so its position is already local to Area.
+    // If Robot is NOT child of Area, we need conversion.
+    // Based on previous code: "robotNode = this.node.getChildByName('Robot')", Robot IS a child.
+    // So `worldPos` passed in should be treated as local position or we expect local pos.
+
+    // Calculate Grid Index
+    // x = startX + c * w  =>  c = (x - startX) / w
+    // y = startY + r * h  =>  r = (y - startY) / h
+
+    // Add 0.5 to round to nearest integer index
+    const c = Math.round((worldPos.x - this._startX) / this._tileWidth);
+    const r = Math.round((worldPos.y - this._startY) / this._tileHeight);
+
+    // Check bounds
+    if (r < 0 || r >= this.rows || c < 0 || c >= this.columns) {
+      return false;
+    }
+
+    // Check if walls or avoid spamming?
+    // For now just Snap to Grid
+    const targetX = this._startX + c * this._tileWidth;
+    const targetY = this._startY + r * this._tileHeight;
+
+    const newBomb = instantiate(bombTemplate);
+    newBomb.active = true;
+    this.node.addChild(newBomb);
+    newBomb.setPosition(targetX, targetY);
+
+    return true;
   }
 
   update(deltaTime: number) {}

@@ -1,7 +1,7 @@
 [
   {
     "__type__": "cc.AnimationClip",
-    "_name": "walk-down",
+    "_name": "bomb-idle",
     "_objFlags": 0,
     "__editorExtras__": {
       "embeddedPlayerGroups": []
@@ -68,19 +68,19 @@
     ],
     "_values": [
       {
-        "__uuid__": "38ed357f-9144-45e0-b425-baaffbd7a9a0@c16c9",
+        "__uuid__": "38ed357f-9144-45e0-b425-baaffbd7a9a0@e477e",
         "__expectedType__": "cc.SpriteFrame"
       },
       {
-        "__uuid__": "38ed357f-9144-45e0-b425-baaffbd7a9a0@b4e2b",
+        "__uuid__": "38ed357f-9144-45e0-b425-baaffbd7a9a0@a293c",
         "__expectedType__": "cc.SpriteFrame"
       },
       {
-        "__uuid__": "38ed357f-9144-45e0-b425-baaffbd7a9a0@c16c9",
+        "__uuid__": "38ed357f-9144-45e0-b425-baaffbd7a9a0@08f1d",
         "__expectedType__": "cc.SpriteFrame"
       },
       {
-        "__uuid__": "38ed357f-9144-45e0-b425-baaffbd7a9a0@67a8f",
+        "__uuid__": "38ed357f-9144-45e0-b425-baaffbd7a9a0@a293c",
         "__expectedType__": "cc.SpriteFrame"
       }
     ]
