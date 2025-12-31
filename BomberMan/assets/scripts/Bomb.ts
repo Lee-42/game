@@ -8,6 +8,7 @@ import {
   IPhysics2DContact,
   RigidBody2D,
 } from "cc";
+import { Area } from "./Area";
 const { ccclass, property } = _decorator;
 
 @ccclass("Bomb")
@@ -28,6 +29,19 @@ export class Bomb extends Component {
       collider.sensor = true; // Start as sensor so it doesn't push the robot
       collider.on(Contact2DType.END_CONTACT, this.onExitBomb, this);
     }
+
+    // Explode after 3 seconds
+    this.scheduleOnce(this.explode, 3);
+  }
+
+  explode() {
+    if (this.node.parent) {
+      const area = this.node.parent.getComponent(Area);
+      if (area) {
+        area.onBombExplode(this.node.position, 1);
+      }
+    }
+    this.node.destroy();
   }
 
   onExitBomb(

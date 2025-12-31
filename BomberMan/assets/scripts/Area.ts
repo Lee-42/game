@@ -5,6 +5,7 @@ import {
   instantiate,
   UITransform,
   Vec3,
+  Animation,
 } from "cc";
 const { ccclass, property } = _decorator;
 
@@ -20,12 +21,26 @@ export class Area extends Component {
   num: number = 0;
 
   private _map: number[][] = [];
+  private _tileNodes: (Node | null)[][] = [];
 
   // Cache grid info
   private _tileWidth: number = 40;
   private _tileHeight: number = 40;
   private _startX: number = 0;
   private _startY: number = 0;
+
+  private _bombNode: Node | null = null;
+
+  onLoad() {
+    // Find and turn off the template so it doesn't execute or render
+    const bomb = this.node.getChildByName("Bomb");
+    if (bomb) {
+      this._bombNode = bomb;
+      this._bombNode.active = false;
+    } else {
+      console.warn("Bomb template not found in Area during onLoad");
+    }
+  }
 
   start() {
     this.validateDimensions();
@@ -113,7 +128,11 @@ export class Area extends Component {
     this._startX = -(this.columns * this._tileWidth) / 2 + this._tileWidth / 2;
     this._startY = -(this.rows * this._tileHeight) / 2 + this._tileHeight / 2;
 
+    // Initialize node storage
+    this._tileNodes = [];
+
     for (let r = 0; r < this.rows; r++) {
+      const nodeRow: (Node | null)[] = [];
       for (let c = 0; c < this.columns; c++) {
         const type = this._map[r][c];
         let newNode: Node | null = null;
@@ -134,7 +153,10 @@ export class Area extends Component {
             this._startY + r * this._tileHeight
           );
         }
+
+        nodeRow.push(newNode);
       }
+      this._tileNodes.push(nodeRow);
     }
 
     // Set Robot Position to (1, 1)
@@ -152,23 +174,12 @@ export class Area extends Component {
   }
 
   public spawnBomb(worldPos: Vec3): boolean {
-    const bombTemplate = this.node.getChildByName("Bomb");
-    if (!bombTemplate) {
-      console.warn("Bomb template not found in Area");
+    if (!this._bombNode) {
+      console.warn("Bomb template not found (check Area.onLoad)");
       return false;
     }
 
-    // Convert worldPos (or relative pos from Robot) to Area local space
-    // Robot is usually child of Area, so its position is already local to Area.
-    // If Robot is NOT child of Area, we need conversion.
-    // Based on previous code: "robotNode = this.node.getChildByName('Robot')", Robot IS a child.
-    // So `worldPos` passed in should be treated as local position or we expect local pos.
-
     // Calculate Grid Index
-    // x = startX + c * w  =>  c = (x - startX) / w
-    // y = startY + r * h  =>  r = (y - startY) / h
-
-    // Add 0.5 to round to nearest integer index
     const c = Math.round((worldPos.x - this._startX) / this._tileWidth);
     const r = Math.round((worldPos.y - this._startY) / this._tileHeight);
 
@@ -177,17 +188,115 @@ export class Area extends Component {
       return false;
     }
 
-    // Check if walls or avoid spamming?
-    // For now just Snap to Grid
     const targetX = this._startX + c * this._tileWidth;
     const targetY = this._startY + r * this._tileHeight;
 
-    const newBomb = instantiate(bombTemplate);
+    const newBomb = instantiate(this._bombNode);
     newBomb.active = true;
     this.node.addChild(newBomb);
     newBomb.setPosition(targetX, targetY);
 
     return true;
+  }
+
+  public onBombExplode(worldPos: Vec3, range: number = 1) {
+    const c = Math.round((worldPos.x - this._startX) / this._tileWidth);
+    const r = Math.round((worldPos.y - this._startY) / this._tileHeight);
+
+    // 1. Explode Center
+    this.createExplosionEffect(r, c, false);
+
+    // 2. Explode Directions
+    const dirs = [
+      { x: 0, y: 1 }, // Up
+      { x: 0, y: -1 }, // Down
+      { x: -1, y: 0 }, // Left
+      { x: 1, y: 0 }, // Right
+    ];
+
+    for (const dir of dirs) {
+      for (let i = 1; i <= range; i++) {
+        const targetR = r + dir.y * i;
+        const targetC = c + dir.x * i;
+
+        // Bounds Check
+        if (
+          targetR < 0 ||
+          targetR >= this.rows ||
+          targetC < 0 ||
+          targetC >= this.columns
+        ) {
+          break;
+        }
+
+        const type = this._map[targetR][targetC];
+
+        // Wall: Stop
+        if (type === 1) {
+          break;
+        }
+
+        // Brick: Destroy and Stop
+        if (type === 2) {
+          this.destroyBrick(targetR, targetC);
+          // Show Tip effect since it's blocked here
+          this.createExplosionEffect(targetR, targetC, true);
+          break;
+        }
+
+        // Ground: Continue
+        if (type === 0) {
+          const isEnd = i === range;
+          this.createExplosionEffect(targetR, targetC, isEnd);
+        }
+      }
+    }
+  }
+
+  private destroyBrick(r: number, c: number) {
+    const node = this._tileNodes[r][c];
+    if (node) {
+      const anim = node.getComponent(Animation);
+      if (anim) {
+        anim.play("brick-explode");
+        anim.once(
+          Animation.EventType.FINISHED,
+          () => {
+            node.destroy();
+          },
+          this
+        );
+      } else {
+        node.destroy();
+      }
+    }
+
+    // Update Map Data
+    this._map[r][c] = 0; // Become ground
+    this._tileNodes[r][c] = null;
+
+    // Spawn ground underneath so no black hole
+    this.spawnGround(r, c);
+  }
+
+  private spawnGround(r: number, c: number) {
+    const groundNodeTemplate = this.node.getChildByName("Ground");
+    if (groundNodeTemplate) {
+      const newGround = instantiate(groundNodeTemplate);
+      newGround.active = true;
+      this.node.addChild(newGround);
+      newGround.setPosition(
+        this._startX + c * this._tileWidth,
+        this._startY + r * this._tileHeight
+      );
+      newGround.setSiblingIndex(0);
+      this._tileNodes[r][c] = newGround;
+    }
+  }
+
+  private createExplosionEffect(r: number, c: number, isTip: boolean) {
+    console.log(`Explosion at [${r}, ${c}] - ${isTip ? "Tail" : "Body"}`);
+    // TODO: Instantiate visual effect
   }
 
   update(deltaTime: number) {}
