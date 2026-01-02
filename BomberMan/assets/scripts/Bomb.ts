@@ -7,16 +7,26 @@ import {
   Contact2DType,
   IPhysics2DContact,
   RigidBody2D,
+  AudioSource,
+  AudioClip,
 } from "cc";
 import { Area } from "./Area";
 const { ccclass, property } = _decorator;
 
 @ccclass("Bomb")
 export class Bomb extends Component {
+  @property(AudioClip)
+  public explodeClip: AudioClip = null;
+
   start() {
     const anim = this.getComponent(Animation);
     if (anim) {
       anim.play("bomb-idle");
+    }
+
+    const audioSource = this.getComponent(AudioSource);
+    if (audioSource) {
+      audioSource.play();
     }
 
     const rb = this.getComponent(RigidBody2D);
@@ -41,7 +51,21 @@ export class Bomb extends Component {
         area.onBombExplode(this.node.position, 1);
       }
     }
-    this.node.destroy();
+
+    const anim = this.getComponent(Animation);
+    if (anim) {
+      anim.play("bomb-explode");
+      anim.on(Animation.EventType.FINISHED, () => {
+        this.node.destroy();
+      });
+    } else {
+      this.node.destroy();
+    }
+
+    const audioSource = this.getComponent(AudioSource);
+    if (audioSource && this.explodeClip) {
+      audioSource.playOneShot(this.explodeClip);
+    }
   }
 
   onExitBomb(

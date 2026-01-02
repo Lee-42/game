@@ -11,3 +11,23 @@
    - **方案 B**：使用 BoxCollider2D 并缩小尺寸。
      - 例如格子 40，将 Size 设为 30。
      - **注意**：可能会导致物理穿透（小人钻进两块墙的缝隙里），不如圆形稳定。
+
+#### 二、AudioSource 和 AudioClip 的区别
+
+1. **AudioClip (音频剪辑)**
+
+   - **实质**：音频资源数据（CD / 磁带）。
+   - **作用**：存储声音波形，自己不发声。
+   - **代码**：`@property(AudioClip) public clip: AudioClip = null;`
+
+2. **AudioSource (音频源)**
+   - **实质**：播放器组件（CD 播放机）。
+   - **作用**：读取 AudioClip 并播放。
+   - **代码**：
+     ```typescript
+     const audioSource = this.getComponent(AudioSource);
+     // 播放默认 Clip
+     audioSource.play();
+     // 临时播放指定 Clip
+     audioSource.playOneShot(this.explodeClip);
+     ```
