@@ -52,20 +52,14 @@ export class Bomb extends Component {
       }
     }
 
-    const anim = this.getComponent(Animation);
-    if (anim) {
-      anim.play("bomb-explode");
-      anim.on(Animation.EventType.FINISHED, () => {
-        this.node.destroy();
-      });
-    } else {
-      this.node.destroy();
-    }
-
     const audioSource = this.getComponent(AudioSource);
     if (audioSource && this.explodeClip) {
       audioSource.playOneShot(this.explodeClip);
     }
+    
+    // Destroy bomb immediately after triggering explosion
+    // Animation is now handled by Area spawning Fire nodes
+    this.node.destroy();
   }
 
   onExitBomb(

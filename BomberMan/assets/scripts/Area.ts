@@ -6,7 +6,9 @@ import {
   UITransform,
   Vec3,
   Animation,
+  Vec2,
 } from "cc";
+import { Fire, FireType } from "./Fire";
 const { ccclass, property } = _decorator;
 
 @ccclass("Area")
@@ -204,7 +206,7 @@ export class Area extends Component {
     const r = Math.round((worldPos.y - this._startY) / this._tileHeight);
 
     // 1. Explode Center
-    this.createExplosionEffect(r, c, false);
+    this.createExplosionEffect(r, c, new Vec2(0, 0), false);
 
     // 2. Explode Directions
     const dirs = [
@@ -240,14 +242,14 @@ export class Area extends Component {
         if (type === 2) {
           this.destroyBrick(targetR, targetC);
           // Show Tip effect since it's blocked here
-          this.createExplosionEffect(targetR, targetC, true);
+          this.createExplosionEffect(targetR, targetC, new Vec2(dir.x, dir.y), true);
           break;
         }
 
         // Ground: Continue
         if (type === 0) {
           const isEnd = i === range;
-          this.createExplosionEffect(targetR, targetC, isEnd);
+          this.createExplosionEffect(targetR, targetC, new Vec2(dir.x, dir.y), isEnd);
         }
       }
     }
@@ -294,9 +296,32 @@ export class Area extends Component {
     }
   }
 
-  private createExplosionEffect(r: number, c: number, isTip: boolean) {
-    console.log(`Explosion at [${r}, ${c}] - ${isTip ? "Tail" : "Body"}`);
-    // TODO: Instantiate visual effect
+  private createExplosionEffect(r: number, c: number, direction: Vec2, isTip: boolean) {
+    const fireNodeTemplate = this.node.getChildByName("Fire");
+    if (!fireNodeTemplate) {
+        console.warn("Fire template not found in Area");
+        return;
+    }
+
+    const newFire = instantiate(fireNodeTemplate);
+    newFire.active = true;
+    this.node.addChild(newFire);
+    newFire.setPosition(
+      this._startX + c * this._tileWidth,
+      this._startY + r * this._tileHeight
+    );
+
+    const fireComp = newFire.getComponent(Fire);
+    if (fireComp) {
+        let type = FireType.Body;
+        if (direction.x === 0 && direction.y === 0) {
+            type = FireType.Center;
+        } else if (isTip) {
+            type = FireType.End;
+        }
+        
+        fireComp.init(type, direction);
+    }
   }
 
   update(deltaTime: number) {}

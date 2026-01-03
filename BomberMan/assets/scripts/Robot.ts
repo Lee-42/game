@@ -10,6 +10,8 @@ import {
   Vec3,
   RigidBody2D,
   Vec2,
+  AudioSource,
+  AudioClip,
 } from "cc";
 import { Area } from "./Area";
 const { ccclass, property } = _decorator;
@@ -22,8 +24,16 @@ export class Robot extends Component {
   @property
   maxBombs: number = 1;
 
+  @property({ tooltip: "每秒播放多少次脚步声 (速率)" })
+  stepsPerSecond: number = 3;
+
+  @property(AudioClip)
+  walkVerticalClip: AudioClip | null = null;
+
   private _anim: Animation | null = null;
   private _rb: RigidBody2D | null = null;
+  private _audioSource: AudioSource | null = null;
+  private _walkHorizontalClip: AudioClip | null = null;
   private _moveDir: Vec3 = new Vec3();
   private _area: Area | null = null;
 
@@ -42,6 +52,10 @@ export class Robot extends Component {
   start() {
     this._anim = this.getComponent(Animation);
     this._rb = this.getComponent(RigidBody2D);
+    this._audioSource = this.getComponent(AudioSource);
+    if (this._audioSource) {
+      this._walkHorizontalClip = this._audioSource.clip;
+    }
 
     // Attempt to find Area component on parent
     if (this.node.parent) {
@@ -123,6 +137,51 @@ export class Robot extends Component {
       this._anim.play(name);
       this._curState = name;
     }
+
+    if (this._audioSource) {
+      let targetClip: AudioClip | null = null;
+      if (name === this._animState.left || name === this._animState.right) {
+        targetClip = this._walkHorizontalClip;
+      } else if (name === this._animState.up || name === this._animState.down) {
+        targetClip = this.walkVerticalClip;
+      }
+
+      if (targetClip) {
+        // If switching clips or starting new playback
+        if (this._audioSource.clip !== targetClip || !this._isWalkingAudioPlaying) {
+          // Stop any existing loop or schedule
+          this.stopAudioSchedule();
+
+          this._audioSource.clip = targetClip;
+          this._audioSource.loop = false; // Disable loop, we control timing manually
+
+          // Play immediately for responsiveness
+          this._audioSource.playOneShot(targetClip);
+
+          // Schedule repeated playback
+          const interval = 1 / this.stepsPerSecond;
+          this.schedule(this.playWalkSound, interval);
+
+          this._isWalkingAudioPlaying = true;
+        }
+      }
+    }
+  }
+
+  private _isWalkingAudioPlaying: boolean = false;
+
+  playWalkSound() {
+    if (this._audioSource && this._audioSource.clip) {
+      this._audioSource.playOneShot(this._audioSource.clip);
+    }
+  }
+
+  stopAudioSchedule() {
+    this.unschedule(this.playWalkSound);
+    if (this._audioSource) {
+      this._audioSource.stop();
+    }
+    this._isWalkingAudioPlaying = false;
   }
 
   stopAnim() {
@@ -130,6 +189,8 @@ export class Robot extends Component {
       this._anim.stop();
       this._curState = "";
     }
+
+    this.stopAudioSchedule();
   }
 
   update(deltaTime: number) {
