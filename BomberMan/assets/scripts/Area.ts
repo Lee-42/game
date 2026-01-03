@@ -22,6 +22,9 @@ export class Area extends Component {
   @property({ type: Number, tooltip: "Number of bricks to generate" })
   num: number = 0;
 
+  @property({ type: Number, tooltip: "Number of balloons to generate" })
+  numBalloons: number = 1;
+
   private _map: number[][] = [];
   private _tileNodes: (Node | null)[][] = [];
 
@@ -32,6 +35,8 @@ export class Area extends Component {
   private _startY: number = 0;
 
   private _bombNode: Node | null = null;
+  private _balloonNode: Node | null = null;
+  private _enemyNode: Node | null = null;
 
   onLoad() {
     // Find and turn off the template so it doesn't execute or render
@@ -42,6 +47,23 @@ export class Area extends Component {
     } else {
       console.warn("Bomb template not found in Area during onLoad");
     }
+
+    const enemyNode = this.node.getChildByName("Enemy");
+    if (enemyNode) {
+        this._enemyNode = enemyNode;
+        const balloon = enemyNode.getChildByName("Balloon");
+        if (balloon) {
+            this._balloonNode = balloon;
+            this._balloonNode.active = false;
+        }
+    } else {
+        // Fallback: check direct child just in case
+        const balloon = this.node.getChildByName("Balloon");
+        if (balloon) {
+            this._balloonNode = balloon;
+            this._balloonNode.active = false;
+        }
+    }
   }
 
   start() {
@@ -49,6 +71,52 @@ export class Area extends Component {
     this.generateMapData();
     // Move renderMap call after we set up grid info, or init grid info inside
     this.renderMap();
+    this.spawnEnemies();
+  }
+
+  spawnEnemies() {
+      console.log('spawnEnemies: ', this._balloonNode)
+      if (!this._balloonNode || this.numBalloons <= 0) return;
+
+      const potentialSpots: { r: number, c: number }[] = [];
+
+      for (let r = 0; r < this.rows; r++) {
+          for (let c = 0; c < this.columns; c++) {
+              // 1. Must be empty ground
+              if (this._map[r][c] !== 0) continue;
+
+              // 2. Safety check: Avoid sticking to player spawn (1, 1)
+              // Let's reserve a 3x3 zone around 1,1 or just distance check
+              // Simple: Don't spawn if r <= 2 and c <= 2
+              if (r <= 3 && c <= 3) continue;
+
+              potentialSpots.push({ r, c });
+          }
+      }
+
+      // Shuffle
+      for (let i = potentialSpots.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [potentialSpots[i], potentialSpots[j]] = [potentialSpots[j], potentialSpots[i]];
+      }
+
+      const count = Math.min(this.numBalloons, potentialSpots.length);
+      for (let i=0; i < count; i++) {
+          const spot = potentialSpots[i];
+          const enemy = instantiate(this._balloonNode);
+          enemy.active = true;
+          
+          if (this._enemyNode) {
+              this._enemyNode.addChild(enemy);
+          } else {
+              this.node.addChild(enemy);
+          }
+          
+          enemy.setPosition(
+            this._startX + spot.c * this._tileWidth,
+            this._startY + spot.r * this._tileHeight
+          );
+      }
   }
 
   validateDimensions() {
@@ -172,6 +240,10 @@ export class Area extends Component {
       robotNode.active = true;
       // Ensure Robot is drawn on top of the generated map tiles
       robotNode.setSiblingIndex(this.node.children.length - 1);
+    }
+
+    if (this._enemyNode) {
+        this._enemyNode.setSiblingIndex(this.node.children.length - 1);
     }
   }
 

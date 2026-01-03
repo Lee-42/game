@@ -18,6 +18,7 @@ import {
 } from "cc";
 import { Area } from "./Area";
 import { Fire } from "./Fire";
+import { Enemy } from "./Enemy/Enemy";
 const { ccclass, property } = _decorator;
 
 @ccclass("Robot")
@@ -98,10 +99,13 @@ export class Robot extends Component {
     contact: IPhysics2DContact | null
   ) {
     // Check if we hit fire
-    // Note: otherCollider is the one we hit (Fire)
-    // IMPORTANT: Ensure Fire prefab has a Fire component, and Fire Node has Group set correctly
     if (otherCollider.getComponent(Fire)) {
       this.die();
+    }
+    
+    // Check if we hit an enemy
+    if (otherCollider.getComponent(Enemy)) {
+        this.die();
     }
   }
 

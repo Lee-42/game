@@ -25,9 +25,27 @@
    - **作用**：读取 AudioClip 并播放。
    - **代码**：
      ```typescript
-     const audioSource = this.getComponent(AudioSource);
      // 播放默认 Clip
-     audioSource.play();
+     // audioSource.play();
      // 临时播放指定 Clip
-     audioSource.playOneShot(this.explodeClip);
+     // audioSource.playOneShot(this.explodeClip);
      ```
+
+- **AudioClip**: 音频数据本身（类似 MP3 文件）。它只是数据，自己不会响。
+- **AudioSource**: 播放器组件（类似 MP3 播放器）。它需要插上 AudioClip（磁带）才能播放声音。
+
+调用 `play()` 是播放 AudioSource 当前设定的 Clip；调用 `playOneShot(clip)` 是让 AudioSource 临时播放一个特定的 Clip（适合音效）。
+
+## 物理分组与碰撞矩阵 (Collision Matrix)
+
+Cocos Creator 使用分组系统来管理物理碰撞。
+
+1.  **分组 (Group)**：给节点打标签，例如 `Default` (主角/墙), `Enemy` (敌人)。
+2.  **碰撞矩阵 (Collision Matrix)**：定义哪些组之间会发生物理交互。
+    - **打钩**：两个组的物体碰撞时，会产生物理阻挡，并触发 `onBeginContact` 等事件。
+    - **不打钩**：物体会互相穿透，且不会触发碰撞事件。
+
+**本项目设置**：
+
+- `Enemy` vs `Default`: **勾选** (确保敌人被墙挡住，也能撞死主角)。
+- `Enemy` vs `Enemy`: **可选** (勾选则敌人互挤，不勾选则重叠)。
