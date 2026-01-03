@@ -12,8 +12,12 @@ import {
   Vec2,
   AudioSource,
   AudioClip,
+  Collider2D,
+  Contact2DType,
+  IPhysics2DContact,
 } from "cc";
 import { Area } from "./Area";
+import { Fire } from "./Fire";
 const { ccclass, property } = _decorator;
 
 @ccclass("Robot")
@@ -29,6 +33,9 @@ export class Robot extends Component {
 
   @property(AudioClip)
   walkVerticalClip: AudioClip | null = null;
+
+  @property(AudioClip)
+  deadClip: AudioClip | null = null;
 
   private _anim: Animation | null = null;
   private _rb: RigidBody2D | null = null;
@@ -52,6 +59,10 @@ export class Robot extends Component {
   start() {
     this._anim = this.getComponent(Animation);
     this._rb = this.getComponent(RigidBody2D);
+    if (this._rb) {
+      this._rb.enabledContactListener = true;
+    }
+    
     this._audioSource = this.getComponent(AudioSource);
     if (this._audioSource) {
       this._walkHorizontalClip = this._audioSource.clip;
@@ -62,13 +73,60 @@ export class Robot extends Component {
       this._area = this.node.parent.getComponent(Area);
     }
 
+    const collider = this.getComponent(Collider2D);
+    if (collider) {
+      collider.on(Contact2DType.BEGIN_CONTACT, this.onBeginContact, this);
+    }
+
     input.on(Input.EventType.KEY_DOWN, this.onKeyDown, this);
     input.on(Input.EventType.KEY_UP, this.onKeyUp, this);
   }
 
   onDestroy() {
+    const collider = this.getComponent(Collider2D);
+    if (collider) {
+      collider.off(Contact2DType.BEGIN_CONTACT, this.onBeginContact, this);
+    }
+
     input.off(Input.EventType.KEY_DOWN, this.onKeyDown, this);
     input.off(Input.EventType.KEY_UP, this.onKeyUp, this);
+  }
+
+  onBeginContact(
+    selfCollider: Collider2D,
+    otherCollider: Collider2D,
+    contact: IPhysics2DContact | null
+  ) {
+    // Check if we hit fire
+    // Note: otherCollider is the one we hit (Fire)
+    // IMPORTANT: Ensure Fire prefab has a Fire component, and Fire Node has Group set correctly
+    if (otherCollider.getComponent(Fire)) {
+      this.die();
+    }
+  }
+
+  die() {
+    console.log("Robot Died!");
+    // 1. Disable controls
+    input.off(Input.EventType.KEY_DOWN, this.onKeyDown, this);
+    input.off(Input.EventType.KEY_UP, this.onKeyUp, this);
+    this.stopAnim(); // Stop walking animation and sound
+
+    // 2. Play death audio
+    if (this._audioSource && this.deadClip) {
+        this._audioSource.playOneShot(this.deadClip);
+    }
+
+    // 3. Play death animation
+    if (this._anim) {
+      this._anim.play('robot-dead');
+      this._anim.on(Animation.EventType.FINISHED, () => {
+          this.node.destroy();
+      });
+    } else {
+        // Fallback if no animation, just destroy immediately
+        this.node.destroy();
+    }
   }
 
   onKeyDown(event: EventKeyboard) {

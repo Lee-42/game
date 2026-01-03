@@ -179,6 +179,10 @@
       {
         "__uuid__": "be8ba51f-632e-442f-a837-a458628bc0bb",
         "__expectedType__": "cc.AnimationClip"
+      },
+      {
+        "__uuid__": "27fa53bc-cccb-4326-80cb-d748a9cca355",
+        "__expectedType__": "cc.AnimationClip"
       }
     ],
     "_defaultClip": {
@@ -208,6 +212,10 @@
     "stepsPerSecond": 4,
     "walkVerticalClip": {
       "__uuid__": "ec4eadfe-36ce-4598-b845-01f1c95c19d1",
+      "__expectedType__": "cc.AudioClip"
+    },
+    "deadClip": {
+      "__uuid__": "2f0eb82f-7caa-490e-bbb5-0b52fbb27882",
       "__expectedType__": "cc.AudioClip"
     },
     "_id": ""
