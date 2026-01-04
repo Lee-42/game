@@ -170,6 +170,10 @@
         "__expectedType__": "cc.AnimationClip"
       },
       {
+        "__uuid__": "235f869f-ad43-452e-8a84-944eccea5b6e",
+        "__expectedType__": "cc.AnimationClip"
+      },
+      {
         "__uuid__": "de25ad80-a093-4b83-9cc6-89e5e985ed12",
         "__expectedType__": "cc.AnimationClip"
       }
