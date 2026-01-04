@@ -8,6 +8,8 @@ import {
   input,
   EventKeyboard,
   KeyCode,
+  Node,
+  UITransform,
 } from "cc";
 const { ccclass, property } = _decorator;
 
@@ -19,11 +21,14 @@ export class Menu extends Component {
   @property(Label)
   continueLabel: Label | null = null;
 
+  @property(Node)
+  arrow: Node | null = null;
+
   private _isStartSelected: boolean = true;
 
   start() {
     input.on(Input.EventType.KEY_DOWN, this.onKeyDown, this);
-    this.updateColors();
+    this.updateSelection();
   }
 
   onDestroy() {
@@ -32,12 +37,13 @@ export class Menu extends Component {
 
   onKeyDown(event: EventKeyboard) {
     switch (event.keyCode) {
-      case KeyCode.KEY_A:
       case KeyCode.ARROW_LEFT:
-      case KeyCode.KEY_D:
+        this._isStartSelected = true;
+        this.updateSelection();
+        break;
       case KeyCode.ARROW_RIGHT:
-        this._isStartSelected = !this._isStartSelected;
-        this.updateColors();
+        this._isStartSelected = false;
+        this.updateSelection();
         break;
       case KeyCode.ENTER:
         if (this._isStartSelected) {
@@ -49,23 +55,50 @@ export class Menu extends Component {
     }
   }
 
-  updateColors() {
-    const selectedColor = new Color(255, 0, 0, 255); // Red
-    const normalColor = new Color(255, 255, 255, 255); // White
+  updateSelection() {
+    if (!this.arrow) return;
 
-    if (this.startLabel) {
-      this.startLabel.color = this._isStartSelected
-        ? selectedColor
-        : normalColor;
+    let targetNode: Node | null = null;
+    if (this._isStartSelected && this.startLabel) {
+      targetNode = this.startLabel.node;
+    } else if (!this._isStartSelected && this.continueLabel) {
+      targetNode = this.continueLabel.node;
     }
-    if (this.continueLabel) {
-      this.continueLabel.color = this._isStartSelected
-        ? normalColor
-        : selectedColor;
+
+    if (targetNode) {
+      const transform = targetNode.getComponent(UITransform);
+      const arrowTransform = this.arrow.getComponent(UITransform);
+      
+      if (transform && arrowTransform) {
+        const targetWorldPos = targetNode.worldPosition;
+        const targetSize = transform.contentSize;
+        const targetAnchor = transform.anchorPoint;
+
+        const offsetX = - (targetAnchor.x * targetSize.width);
+        
+        // Target World Left X
+        const worldLeftX = targetWorldPos.x + offsetX;
+
+        const arrowSize = arrowTransform.contentSize;
+        const arrowAnchor = arrowTransform.anchorPoint;
+        
+        // Closer padding. Reduced from 10 to 0 or even negative if needed. 
+        // Let's try 0 for "closer".
+        const padding = -65;
+        const arrowTargetX = worldLeftX - padding - (1 - arrowAnchor.x) * arrowSize.width;
+
+        // Keep current Y and Z
+        const currentPos = this.arrow.worldPosition;
+        this.arrow.setWorldPosition(arrowTargetX, currentPos.y, currentPos.z);
+      } else {
+        // Fallback
+        const currentPos = this.arrow.worldPosition;
+        this.arrow.setWorldPosition(targetNode.worldPosition.x - 60, currentPos.y, currentPos.z);
+      }
     }
   }
 
   startGame() {
-    director.loadScene("area");
+    director.loadScene("game");
   }
 }
