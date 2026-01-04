@@ -25,6 +25,9 @@ export class Area extends Component {
   @property({ type: Number, tooltip: "Number of balloons to generate" })
   numBalloons: number = 5;
 
+  @property({ type: Number, tooltip: "Number of onions to generate" })
+  numOnions: number = 5;
+
   private _map: number[][] = [];
   private _tileNodes: (Node | null)[][] = [];
 
@@ -36,6 +39,7 @@ export class Area extends Component {
 
   private _bombNode: Node | null = null;
   private _balloonNode: Node | null = null;
+  private _onionNode: Node | null = null;
   private _enemyNode: Node | null = null;
 
   onLoad() {
@@ -56,12 +60,22 @@ export class Area extends Component {
         this._balloonNode = balloon;
         this._balloonNode.active = false;
       }
+      const onion = enemyNode.getChildByName("Onion");
+      if (onion) {
+        this._onionNode = onion;
+        this._onionNode.active = false;
+      }
     } else {
       // Fallback: check direct child just in case
       const balloon = this.node.getChildByName("Balloon");
       if (balloon) {
         this._balloonNode = balloon;
         this._balloonNode.active = false;
+      }
+      const onion = this.node.getChildByName("Onion");
+      if (onion) {
+        this._onionNode = onion;
+        this._onionNode.active = false;
       }
     }
   }
@@ -75,9 +89,6 @@ export class Area extends Component {
   }
 
   spawnEnemies() {
-    console.log("spawnEnemies: ", this._balloonNode);
-    if (!this._balloonNode || this.numBalloons <= 0) return;
-
     const potentialSpots: { r: number; c: number }[] = [];
 
     for (let r = 0; r < this.rows; r++) {
@@ -86,8 +97,6 @@ export class Area extends Component {
         if (this._map[r][c] !== 0) continue;
 
         // 2. Safety check: Avoid sticking to player spawn (1, 1)
-        // Let's reserve a 3x3 zone around 1,1 or just distance check
-        // Simple: Don't spawn if r <= 2 and c <= 2
         if (r <= 3 && c <= 3) continue;
 
         potentialSpots.push({ r, c });
@@ -103,23 +112,44 @@ export class Area extends Component {
       ];
     }
 
-    const count = Math.min(this.numBalloons, potentialSpots.length);
-    for (let i = 0; i < count; i++) {
-      const spot = potentialSpots[i];
-      const enemy = instantiate(this._balloonNode);
-      enemy.active = true;
+    let spotIndex = 0;
 
-      if (this._enemyNode) {
-        this._enemyNode.addChild(enemy);
-      } else {
-        this.node.addChild(enemy);
-      }
-
-      enemy.setPosition(
-        this._startX + spot.c * this._tileWidth,
-        this._startY + spot.r * this._tileHeight
+    // Spawn Balloons
+    if (this._balloonNode && this.numBalloons > 0) {
+      const count = Math.min(
+        this.numBalloons,
+        potentialSpots.length - spotIndex
       );
+      for (let i = 0; i < count; i++) {
+        this.spawnSingleEnemy(this._balloonNode, potentialSpots[spotIndex]);
+        spotIndex++;
+      }
     }
+
+    // Spawn Onions
+    if (this._onionNode && this.numOnions > 0) {
+      const count = Math.min(this.numOnions, potentialSpots.length - spotIndex);
+      for (let i = 0; i < count; i++) {
+        this.spawnSingleEnemy(this._onionNode, potentialSpots[spotIndex]);
+        spotIndex++;
+      }
+    }
+  }
+
+  spawnSingleEnemy(prefab: Node, spot: { r: number; c: number }) {
+    const enemy = instantiate(prefab);
+    enemy.active = true;
+
+    if (this._enemyNode) {
+      this._enemyNode.addChild(enemy);
+    } else {
+      this.node.addChild(enemy);
+    }
+
+    enemy.setPosition(
+      this._startX + spot.c * this._tileWidth,
+      this._startY + spot.r * this._tileHeight
+    );
   }
 
   validateDimensions() {
