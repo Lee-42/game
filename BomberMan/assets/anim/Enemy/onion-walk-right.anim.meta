@@ -2,12 +2,12 @@
   "ver": "2.0.3",
   "importer": "animation-clip",
   "imported": true,
-  "uuid": "589266b5-7625-4c22-8a29-c28cab0e86d4",
+  "uuid": "458f1e63-5b64-4b12-bc4f-ec5e920a68ec",
   "files": [
     ".cconb"
   ],
   "subMetas": {},
   "userData": {
-    "name": "Onion-walk-left"
+    "name": "onion-walk-right"
   }
 }

@@ -24,7 +24,6 @@ export class Area extends Component {
 
   @property({ type: Number, tooltip: "Number of balloons to generate" })
   numBalloons: number = 5;
-
   @property({ type: Number, tooltip: "Number of onions to generate" })
   numOnions: number = 5;
 
