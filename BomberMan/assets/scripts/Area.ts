@@ -23,14 +23,14 @@ export class Area extends Component {
   num: number = 0;
 
   @property({ type: Number, tooltip: "Number of balloons to generate" })
-  numBalloons: number = 1;
+  numBalloons: number = 5;
 
   private _map: number[][] = [];
   private _tileNodes: (Node | null)[][] = [];
 
   // Cache grid info
-  private _tileWidth: number = 40;
-  private _tileHeight: number = 40;
+  private _tileWidth: number = 32;
+  private _tileHeight: number = 32;
   private _startX: number = 0;
   private _startY: number = 0;
 
@@ -50,19 +50,19 @@ export class Area extends Component {
 
     const enemyNode = this.node.getChildByName("Enemy");
     if (enemyNode) {
-        this._enemyNode = enemyNode;
-        const balloon = enemyNode.getChildByName("Balloon");
-        if (balloon) {
-            this._balloonNode = balloon;
-            this._balloonNode.active = false;
-        }
+      this._enemyNode = enemyNode;
+      const balloon = enemyNode.getChildByName("Balloon");
+      if (balloon) {
+        this._balloonNode = balloon;
+        this._balloonNode.active = false;
+      }
     } else {
-        // Fallback: check direct child just in case
-        const balloon = this.node.getChildByName("Balloon");
-        if (balloon) {
-            this._balloonNode = balloon;
-            this._balloonNode.active = false;
-        }
+      // Fallback: check direct child just in case
+      const balloon = this.node.getChildByName("Balloon");
+      if (balloon) {
+        this._balloonNode = balloon;
+        this._balloonNode.active = false;
+      }
     }
   }
 
@@ -75,48 +75,51 @@ export class Area extends Component {
   }
 
   spawnEnemies() {
-      console.log('spawnEnemies: ', this._balloonNode)
-      if (!this._balloonNode || this.numBalloons <= 0) return;
+    console.log("spawnEnemies: ", this._balloonNode);
+    if (!this._balloonNode || this.numBalloons <= 0) return;
 
-      const potentialSpots: { r: number, c: number }[] = [];
+    const potentialSpots: { r: number; c: number }[] = [];
 
-      for (let r = 0; r < this.rows; r++) {
-          for (let c = 0; c < this.columns; c++) {
-              // 1. Must be empty ground
-              if (this._map[r][c] !== 0) continue;
+    for (let r = 0; r < this.rows; r++) {
+      for (let c = 0; c < this.columns; c++) {
+        // 1. Must be empty ground
+        if (this._map[r][c] !== 0) continue;
 
-              // 2. Safety check: Avoid sticking to player spawn (1, 1)
-              // Let's reserve a 3x3 zone around 1,1 or just distance check
-              // Simple: Don't spawn if r <= 2 and c <= 2
-              if (r <= 3 && c <= 3) continue;
+        // 2. Safety check: Avoid sticking to player spawn (1, 1)
+        // Let's reserve a 3x3 zone around 1,1 or just distance check
+        // Simple: Don't spawn if r <= 2 and c <= 2
+        if (r <= 3 && c <= 3) continue;
 
-              potentialSpots.push({ r, c });
-          }
+        potentialSpots.push({ r, c });
+      }
+    }
+
+    // Shuffle
+    for (let i = potentialSpots.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [potentialSpots[i], potentialSpots[j]] = [
+        potentialSpots[j],
+        potentialSpots[i],
+      ];
+    }
+
+    const count = Math.min(this.numBalloons, potentialSpots.length);
+    for (let i = 0; i < count; i++) {
+      const spot = potentialSpots[i];
+      const enemy = instantiate(this._balloonNode);
+      enemy.active = true;
+
+      if (this._enemyNode) {
+        this._enemyNode.addChild(enemy);
+      } else {
+        this.node.addChild(enemy);
       }
 
-      // Shuffle
-      for (let i = potentialSpots.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [potentialSpots[i], potentialSpots[j]] = [potentialSpots[j], potentialSpots[i]];
-      }
-
-      const count = Math.min(this.numBalloons, potentialSpots.length);
-      for (let i=0; i < count; i++) {
-          const spot = potentialSpots[i];
-          const enemy = instantiate(this._balloonNode);
-          enemy.active = true;
-          
-          if (this._enemyNode) {
-              this._enemyNode.addChild(enemy);
-          } else {
-              this.node.addChild(enemy);
-          }
-          
-          enemy.setPosition(
-            this._startX + spot.c * this._tileWidth,
-            this._startY + spot.r * this._tileHeight
-          );
-      }
+      enemy.setPosition(
+        this._startX + spot.c * this._tileWidth,
+        this._startY + spot.r * this._tileHeight
+      );
+    }
   }
 
   validateDimensions() {
@@ -191,8 +194,8 @@ export class Area extends Component {
 
     // Cache Tile Size and Start Position
     const transform = groundNode.getComponent(UITransform);
-    this._tileWidth = transform ? transform.width : 40;
-    this._tileHeight = transform ? transform.height : 40;
+    this._tileWidth = transform ? transform.width : 32;
+    this._tileHeight = transform ? transform.height : 32;
 
     // Assuming anchor is 0.5, 0.5
     this._startX = -(this.columns * this._tileWidth) / 2 + this._tileWidth / 2;
@@ -243,7 +246,7 @@ export class Area extends Component {
     }
 
     if (this._enemyNode) {
-        this._enemyNode.setSiblingIndex(this.node.children.length - 1);
+      this._enemyNode.setSiblingIndex(this.node.children.length - 1);
     }
   }
 
@@ -314,14 +317,24 @@ export class Area extends Component {
         if (type === 2) {
           this.destroyBrick(targetR, targetC);
           // Show Tip effect since it's blocked here
-          this.createExplosionEffect(targetR, targetC, new Vec2(dir.x, dir.y), true);
+          this.createExplosionEffect(
+            targetR,
+            targetC,
+            new Vec2(dir.x, dir.y),
+            true
+          );
           break;
         }
 
         // Ground: Continue
         if (type === 0) {
           const isEnd = i === range;
-          this.createExplosionEffect(targetR, targetC, new Vec2(dir.x, dir.y), isEnd);
+          this.createExplosionEffect(
+            targetR,
+            targetC,
+            new Vec2(dir.x, dir.y),
+            isEnd
+          );
         }
       }
     }
@@ -368,11 +381,16 @@ export class Area extends Component {
     }
   }
 
-  private createExplosionEffect(r: number, c: number, direction: Vec2, isTip: boolean) {
+  private createExplosionEffect(
+    r: number,
+    c: number,
+    direction: Vec2,
+    isTip: boolean
+  ) {
     const fireNodeTemplate = this.node.getChildByName("Fire");
     if (!fireNodeTemplate) {
-        console.warn("Fire template not found in Area");
-        return;
+      console.warn("Fire template not found in Area");
+      return;
     }
 
     const newFire = instantiate(fireNodeTemplate);
@@ -383,16 +401,24 @@ export class Area extends Component {
       this._startY + r * this._tileHeight
     );
 
+    // Fix Layering: Ensure Fire is below Enemy (Balloon)
+    if (this._enemyNode) {
+      // Insert fire underneath the enemy layer
+      // If there are other top-layer objects (like Player), this might need refinement,
+      // but for now this ensures Balloon > Fire.
+      newFire.setSiblingIndex(this._enemyNode.getSiblingIndex());
+    }
+
     const fireComp = newFire.getComponent(Fire);
     if (fireComp) {
-        let type = FireType.Body;
-        if (direction.x === 0 && direction.y === 0) {
-            type = FireType.Center;
-        } else if (isTip) {
-            type = FireType.End;
-        }
-        
-        fireComp.init(type, direction);
+      let type = FireType.Body;
+      if (direction.x === 0 && direction.y === 0) {
+        type = FireType.Center;
+      } else if (isTip) {
+        type = FireType.End;
+      }
+
+      fireComp.init(type, direction);
     }
   }
 

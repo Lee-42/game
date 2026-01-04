@@ -2,12 +2,12 @@
   "ver": "2.0.3",
   "importer": "animation-clip",
   "imported": true,
-  "uuid": "c04942b4-a3a3-4262-b925-fcbe1ea43510",
+  "uuid": "235f869f-ad43-452e-8a84-944eccea5b6e",
   "files": [
     ".cconb"
   ],
   "subMetas": {},
   "userData": {
-    "name": "ballon-walk-left"
+    "name": "balloon-dead"
   }
 }

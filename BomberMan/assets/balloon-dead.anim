@@ -1,7 +1,7 @@
 [
   {
     "__type__": "cc.AnimationClip",
-    "_name": "ballon-idle",
+    "_name": "balloon-dead",
     "_objFlags": 0,
     "__editorExtras__": {
       "embeddedPlayerGroups": []
@@ -9,9 +9,9 @@
     "_native": "",
     "sample": 60,
     "speed": 1,
-    "wrapMode": 2,
+    "wrapMode": 1,
     "enableTrsBlending": false,
-    "_duration": 0.5,
+    "_duration": 0.8333333333333334,
     "_hash": 500763545,
     "_tracks": [
       {
@@ -62,9 +62,11 @@
     "__type__": "cc.ObjectCurve",
     "_times": [
       0,
-      0.16666666666666666,
+      0.15,
       0.31666666666666665,
-      0.48333333333333334
+      0.5,
+      0.65,
+      0.8166666666666667
     ],
     "_values": [
       {
@@ -72,15 +74,23 @@
         "__expectedType__": "cc.SpriteFrame"
       },
       {
-        "__uuid__": "38ed357f-9144-45e0-b425-baaffbd7a9a0@c20e8",
+        "__uuid__": "38ed357f-9144-45e0-b425-baaffbd7a9a0@427eb",
         "__expectedType__": "cc.SpriteFrame"
       },
       {
-        "__uuid__": "38ed357f-9144-45e0-b425-baaffbd7a9a0@5c776",
+        "__uuid__": "38ed357f-9144-45e0-b425-baaffbd7a9a0@d826d",
         "__expectedType__": "cc.SpriteFrame"
       },
       {
-        "__uuid__": "38ed357f-9144-45e0-b425-baaffbd7a9a0@c20e8",
+        "__uuid__": "38ed357f-9144-45e0-b425-baaffbd7a9a0@a7eac",
+        "__expectedType__": "cc.SpriteFrame"
+      },
+      {
+        "__uuid__": "38ed357f-9144-45e0-b425-baaffbd7a9a0@b5391",
+        "__expectedType__": "cc.SpriteFrame"
+      },
+      {
+        "__uuid__": "38ed357f-9144-45e0-b425-baaffbd7a9a0@eb4d2",
         "__expectedType__": "cc.SpriteFrame"
       }
     ]

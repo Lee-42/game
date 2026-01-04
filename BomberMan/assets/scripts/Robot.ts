@@ -56,6 +56,7 @@ export class Robot extends Component {
   };
 
   private _curState: string = "";
+  private _isDead: boolean = false;
 
   start() {
     this._anim = this.getComponent(Animation);
@@ -63,7 +64,7 @@ export class Robot extends Component {
     if (this._rb) {
       this._rb.enabledContactListener = true;
     }
-    
+
     this._audioSource = this.getComponent(AudioSource);
     if (this._audioSource) {
       this._walkHorizontalClip = this._audioSource.clip;
@@ -98,42 +99,51 @@ export class Robot extends Component {
     otherCollider: Collider2D,
     contact: IPhysics2DContact | null
   ) {
+    if (this._isDead) return;
+
     // Check if we hit fire
     if (otherCollider.getComponent(Fire)) {
       this.die();
     }
-    
+
     // Check if we hit an enemy
     if (otherCollider.getComponent(Enemy)) {
-        this.die();
+      this.die();
     }
   }
 
   die() {
+    if (this._isDead) return;
+    this._isDead = true;
     console.log("Robot Died!");
+
     // 1. Disable controls
     input.off(Input.EventType.KEY_DOWN, this.onKeyDown, this);
     input.off(Input.EventType.KEY_UP, this.onKeyUp, this);
     this.stopAnim(); // Stop walking animation and sound
 
+    // Force stop movement
+    this._moveDir.set(0, 0, 0);
+
     // 2. Play death audio
     if (this._audioSource && this.deadClip) {
-        this._audioSource.playOneShot(this.deadClip);
+      this._audioSource.playOneShot(this.deadClip);
     }
 
     // 3. Play death animation
     if (this._anim) {
-      this._anim.play('robot-dead');
+      this._anim.play("robot-dead");
       this._anim.on(Animation.EventType.FINISHED, () => {
-          this.node.destroy();
+        this.node.destroy();
       });
     } else {
-        // Fallback if no animation, just destroy immediately
-        this.node.destroy();
+      // Fallback if no animation, just destroy immediately
+      this.node.destroy();
     }
   }
 
   onKeyDown(event: EventKeyboard) {
+    if (this._isDead) return;
     console.log(event.keyCode);
     switch (event.keyCode) {
       case KeyCode.KEY_J:
@@ -210,7 +220,10 @@ export class Robot extends Component {
 
       if (targetClip) {
         // If switching clips or starting new playback
-        if (this._audioSource.clip !== targetClip || !this._isWalkingAudioPlaying) {
+        if (
+          this._audioSource.clip !== targetClip ||
+          !this._isWalkingAudioPlaying
+        ) {
           // Stop any existing loop or schedule
           this.stopAudioSchedule();
 
@@ -256,6 +269,7 @@ export class Robot extends Component {
   }
 
   update(deltaTime: number) {
+    if (this._isDead) return;
     if (this._moveDir.equals(Vec3.ZERO)) return;
 
     const currentPos = this.node.position;
