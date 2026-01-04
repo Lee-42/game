@@ -1,7 +1,7 @@
 [
   {
     "__type__": "cc.SceneAsset",
-    "_name": "area",
+    "_name": "game",
     "_objFlags": 0,
     "__editorExtras__": {},
     "_native": "",
@@ -11,7 +11,7 @@
   },
   {
     "__type__": "cc.Scene",
-    "_name": "area",
+    "_name": "game",
     "_objFlags": 0,
     "__editorExtras__": {},
     "_parent": null,
@@ -1673,6 +1673,7 @@
     "columns": 17,
     "num": 20,
     "numBalloons": 5,
+    "numOnions": 5,
     "_id": "049Ae6ThdDHbALHP4Pixq8"
   },
   {
